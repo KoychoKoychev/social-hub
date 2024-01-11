@@ -10,9 +10,6 @@ type PostCardProps = {
 
 const PostCard = ({ post }: PostCardProps) => {
 
-    console.log(post);
-
-
     const { user } = useUserContext()
 
     if (!post.creator) return
@@ -62,8 +59,8 @@ const PostCard = ({ post }: PostCardProps) => {
                     className="post-card_img"
                 />
 
-                <PostStats post={post} userId={user.id} />
             </Link>
+            <PostStats post={post} userId={user.id} />
         </div>
     )
 }
