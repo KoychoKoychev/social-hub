@@ -19,15 +19,18 @@ import { Models } from "appwrite"
 import { useUserContext } from "@/context/AuthContext"
 import { useToast } from "../ui/use-toast"
 import { useNavigate } from "react-router-dom"
-import { useCreatePost } from "@/lib/react-query/queriesAndMutations"
+import { useCreatePost, useUpdatePost } from "@/lib/react-query/queriesAndMutations"
 
 type PostFormProps = {
-    post?: Models.Document
+    post?: Models.Document,
+    action: 'update' | 'create'
 }
 
-const PostForm = ({ post }: PostFormProps) => {
+const PostForm = ({ post, action }: PostFormProps) => {
 
     const { mutateAsync: createPost, isPending: isLoadingCreate } = useCreatePost()
+    const { mutateAsync: updatePost, isPending: isUpdatingPost } = useUpdatePost()
+
     const { user } = useUserContext()
     const { toast } = useToast()
 
@@ -46,19 +49,40 @@ const PostForm = ({ post }: PostFormProps) => {
 
     // 2. Define a submit handler.
     async function onSubmit(values: z.infer<typeof PostValidation>) {
-        const newPost = await createPost({
-            ...values,
-            userId: user.id
-        })
 
-        if (!newPost) {
-            toast({
-                title: 'Post creation failed! Please try again.'
+        if (action === 'create') {
+            const newPost = await createPost({
+                ...values,
+                userId: user.id
             })
-        }
 
-        navigate('/') //TODO fix navigation
+            if (!newPost) {
+                toast({
+                    title: 'Post creation failed! Please try again.'
+                })
+            }
+
+            navigate('/') //TODO fix navigation
+
+        } else if (action === 'update' && post) {
+            const updatedPost = await updatePost({
+                ...values,
+                postId: post.$id,
+                imageId: post?.imageId,
+                imageUrl: post?.imageUrl
+            })
+
+            if (!updatedPost) {
+                toast({
+                    title: 'Post update failed! Please try again.'
+                })
+            }
+
+            navigate(`/posts/${post.$id}`) //TODO fix navigation
+
+        }
     }
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-9 w-full max-w-5xl">
@@ -116,7 +140,18 @@ const PostForm = ({ post }: PostFormProps) => {
                 />
                 <div className="flex gap-4 items-center justify-end">
                     <Button type="button" className="shad-button_dark_4">Cancel</Button>
-                    <Button type="submit" className="shad-button_primary whitespace-nowrap">Submit</Button>
+                    <Button
+                        type="submit"
+                        className="shad-button_primary whitespace-nowrap"
+                        disabled={isLoadingCreate || isUpdatingPost}
+                    >
+                        {isLoadingCreate || isUpdatingPost
+                            ? 'Loading...'
+                            : action === 'create'
+                                ? 'Submit'
+                                : 'Update'
+                        }
+                    </Button>
                 </div>
             </form>
         </Form>
