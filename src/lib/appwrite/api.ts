@@ -68,7 +68,7 @@ export async function getCurrentUser() {
     try {
         const currentAccount = await account.get()
 
-        if (!currentAccount) throw new Error();
+        if (!currentAccount) throw new Error('No User Logged!');
 
         const currentUser = await databases.listDocuments(
             appwriteConfig.databaseId,
@@ -82,7 +82,7 @@ export async function getCurrentUser() {
 
         return currentUser.documents[0];
     } catch (error) {
-        console.error(error)
+        console.log(error);
     }
 }
 
